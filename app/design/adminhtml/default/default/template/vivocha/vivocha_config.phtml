@@ -1,0 +1,61 @@
+<div id="vivocha" ng-controller="magentoCtrl">
+<!--
+  <pre> -<?php echo Mage::getStoreConfig('vivocha/settings/vivocha_account'); ?>-</pre>
+-->
+
+<?php 
+  Mage::app()->getCacheInstance()->cleanType('config');
+  $vvc_account = Mage::getStoreConfig('vivocha/settings/account');
+  $vvc_world = Mage::getStoreConfig('vivocha/settings/world');
+?>
+
+
+<div class="entry-edit">
+    <form id="vvc_acct_form" action="<?php echo $this->getUrl('*/*/post'); ?>" method="POST">
+      <input name="form_key" type="hidden" value="<?php echo Mage::getSingleton('core/session')->getFormKey() ?>" />
+      <div class="entry-edit-head">
+        <h4 class="icon-head head-edit-form fieldset-legend">Vivocha Account Information</h4>
+      <div class="form-buttons"></div>
+      </div>
+    <div class="fieldset " id="base_fieldset">
+    <div class="hor-scroll">
+                        <table cellspacing="0" class="form-list">
+            <tbody>
+                <tr>
+        <td class="label"><label for="vivocha_account">Vivocha Account Name <span class="required">*</span></label></td>
+    <td class="value">
+        <input type="text" id="vivocha_account" name="vivocha_account" title="Account Name" value="<?php echo Mage::getStoreConfig('vivocha/settings/account'); ?>" class=" input-text required-entry">
+    </td>
+    </tr>
+<tr>
+        <td class="label"><label for="vivocha_link">Vivocha World</label></td>
+    <td class="value">
+    
+      <input type="text" id="vivocha_link" name="vivocha_link" title="Link to your Vivocha World" value="<?php if ($vvc_world != "") { echo $vvc_world; } else {echo 'www.vivocha.com';} ?>" class=" input-text required-entry">
+        
+        </td>
+    </tr>
+            </tbody>
+        </table>
+            </div>
+        </div>
+</form></div>
+
+<!--
+      <div ng-cloak>
+           <iframe id="vvc_mage" src="{{vvc_mage_url}}<?php if ($vvc_account != "") { echo '&vvc_account=' . $vvc_account; } ?><?php if ($vvc_world != "") { echo '&vvc_world=' . $vvc_world; } ?>" frameborder="0" style="overflow:hidden;overflow-x:hidden;overflow-y:hidden;height:800px;width:100%;top:0px;left:0px;right:0px;bottom:0px" height="800px" width="100%"></iframe>
+      </div> 
+      
+    <div>
+      <form id="vvc_acct_form" action="<?php echo $this->getUrl('*/*/post'); ?>" method="POST">
+            <input name="form_key" type="hidden" value="<?php echo Mage::getSingleton('core/session')->getFormKey() ?>" /> 
+            <input type="hidden" id="vivocha_account" name="vivocha_account" value="{{vvc_acct}}">
+            <input type="hidden" id="vivocha_link" name="vivocha_link" value="{{vvc_world}}">
+      </form>
+   </div>     
+   
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.6/angular.js"></script>
+    <script src="<?php echo Mage::getBaseUrl(Mage_Core_Model_Store::URL_TYPE_JS); ?>vivocha/controller.js"></script>
+-->
+
+</div>

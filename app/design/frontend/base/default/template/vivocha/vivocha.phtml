@@ -1,0 +1,309 @@
+<?php 
+  
+  Mage::app()->getCacheInstance()->cleanType('config');
+  // Vivocha
+  $vvc_account = Mage::getStoreConfig('vivocha/settings/account');
+  $vvc_world = Mage::getStoreConfig('vivocha/settings/world');
+   
+	// Short Code
+	$app = Mage::app();
+	$appGetStore = $app->getStore();
+	$cartHelper = $this->helper('checkout/cart');
+	$coreHelper = $this->helper('core');
+	$customer = $this->helper('customer')->getCustomer();
+   
+  // Cart
+  $summaryCount = $cartHelper->getSummaryCount(); //get total items in cart
+  $cartTotalItems = isset($summaryCount) ? $summaryCount : 0;
+  $cartTotalPrice = $coreHelper->formatPrice($cartHelper->getQuote()->getGrandTotal(), false);
+  
+  // Customer
+  $customerId = Mage::getSingleton('customer/session')->getCustomer()->getId();
+  if( !empty($customerId) ) {
+	  $customerFirstName = $customer->getData('firstname');
+	  $customerLastName = $customer->getData('lastname');
+	  $customerEmail = $customer->getData('email');
+	  $nickName = '';
+	  if ($customerFirstName !== NULL) {
+	    $nickName .= $customerFirstName;
+	  }
+	  if ($customerLastName !== NULL) {
+	    $nickName .= ($customerFirstName !== NULL) ? (" ".$customerLastName) : $customerLastName;
+	  }
+
+	  // Orders
+	  $cache = Mage::app()->getCache();  // Use cache !
+	  $orders = $cache->load("last_three_orders");
+	  if (!$orders) {
+		  // Cache empty, query the DB
+			$orders = Mage::getModel('sales/order')->getCollection()
+				->addAttributeToSelect('*')
+				->addFieldToFilter('customer_id', $customerId)
+				->setOrder('created_at', Varien_Data_Collection_Db::SORT_ORDER_DESC)
+				->setPageSize(3); /* to get last 3 orders only */ 
+
+			// Get orders
+			$_orders = $orders->getData();
+			$i = 0;
+			foreach($orders as $order) {
+				$j = 0;
+				$_orders[$i]['shipping_address'] = $order->getShippingAddress()->getData();
+				// Get all order items	
+        foreach($order->getAllItems() as $item) {
+	        $_orders[$i]['items'][$j] = $item->getData();
+	        $j++;
+	        
+          $orderTotalItems = $orderTotalItems + $item->getQtyOrdered();
+          $orderTotalPrice += ($item->getPrice() * $item->getQtyOrdered());          
+        }
+        $i++;
+	    }
+      // Save into cache (lifetime 60x60)
+			// save($value, $key, $tags = array(), $lifeTime=null)
+			$cache->save(serialize($_orders), "last_three_orders", array("orders_cache"), 60*60);
+				  	            			
+	  } else {
+			// Retrieve from cache 	
+		 $_orders = unserialize($orders);
+	  
+	  }
+  }
+  
+  $storeName = Mage::app()->getStore()->getFrontendName();                 
+  $currencySymbol = Mage::app()->getLocale()->currency(Mage::app()->getStore()->getCurrentCurrencyCode())->getSymbol();
+  $currentLanguage = Mage::app()->getStore()->getCode();
+  
+  if ( ($vvc_account !== NULL) And ($vvc_world !== NULL) ): ?>
+
+	  <script src="//<?php echo $vvc_world; ?>/a/<?php echo $vvc_account; ?>/api/vivocha.js"></script>
+	
+	  <script type="text/javascript">
+	  
+	    if (!window.vvcMagentoData) { window.vvcMagentoData = {}; }
+	    
+	    //console.log('ORDERS:', <?php echo json_encode($_orders); ?>); 
+	    // Save store info
+	    var storeInfo = {};
+	    
+	    storeInfo.name = <?php echo json_encode($storeName);?>;
+	    storeInfo.currentLanguage = <?php echo json_encode($currentLanguage);?>;
+	    storeInfo.currencySymbol = <?php echo json_encode($currencySymbol);?>;
+	    
+	    window.vvcMagentoData["storeInfo"] = storeInfo;
+	    
+	    // Save customer info
+	    var customerInfo = {};
+	
+	    customerInfo.id = <?php echo json_encode($customerId); ?>;    
+	    customerInfo.firstName = <?php echo json_encode($customerFirstName); ?>;
+	    customerInfo.lastName = <?php echo json_encode($customerLastName); ?>;
+	    customerInfo.email = <?php echo json_encode($customerEmail); ?>;
+	    
+	    window.vvcMagentoData["customerInfo"] = customerInfo;
+	    
+	    // Save cart info
+	    var cartInfo = {};
+	    
+	    cartInfo.totalItems = <?php echo $cartTotalItems; ?>;  
+	    cartInfo.totalPrice = <?php echo json_encode($cartTotalPrice); ?>;
+	    cartInfo.items = [];
+	    <?php
+	      $items = $cartHelper->getCart()->getItems();       
+	  
+	      foreach  ($items  as   $item)  {  
+	        echo  "var  c_item = {id:'',sku:'',name:'',desc:'',price:'',qty:0 };";  
+	        echo  "c_item.id = ", json_encode($item->getProductId()), ";";
+	        echo  "c_item.sku = ", json_encode($item->getSku()), ";";
+	        echo  "c_item.name = ", json_encode($item->getName()), ";";            
+	        echo  "c_item.desc = ", json_encode(Mage::getModel('catalog/product')->load($item->getProductId())->getShortDescription()), ";";
+	        $price = $coreHelper->formatPrice($item->getPrice(), false);
+	        echo  "c_item.price = ", json_encode($price), ";";
+	        echo  "c_item.qty = ", $item->getQty(), ";";
+	          
+	        echo "cartInfo.items.push(c_item);";  
+	      } 
+	    ?>
+	
+	    window.vvcMagentoData["cartInfo"] = cartInfo;
+	       
+	    // Save order info
+	    var orderInfo = {};
+	    orderInfo.orders = [];
+
+	    <?php  
+	      $orderTotalItems = 0;
+	      $orderTotalPrice = 0;
+	      $orderIDs = "["; 
+	      
+	      foreach($_orders as $order) {
+	        $orderIDs .= $order['entity_id'] . ",";
+	        echo  "var order = {id:'', name:'', ship_addr:'', status:''};";        
+	        echo  "order.id = ", json_encode($order['entity_id']), ";";
+	        //echo  "order.name   =  ", $order->getName(), ";";
+	        echo  "order.ship_addr = ", json_encode($order['shipping_address']), ";"; 
+	        echo  "order.status = ", json_encode($order['status']), ";"; 
+	        echo  "order.items = [];";
+	        
+	        foreach($order['items'] as $item) {
+
+	          $orderTotalItems = $orderTotalItems + $item['qty_ordered'];
+	          $orderTotalPrice += ($item['price'] * $item['qty_ordered']);
+	          
+	          echo  "var  o_item = {id:'',name:'',price:'',qty:0 };";  
+	          echo  "o_item.id = ", json_encode($item['product_id']), ";";
+	          echo  "o_item.name = ", json_encode($item['name']), ";";
+	          echo  "o_item.price = ", json_encode($coreHelper->formatPrice($item['price'], false)), ";";
+	          echo  "o_item.qty = ", $item['qty_ordered'], ";";
+	          
+	          echo "order.items.push(o_item);";
+	        }
+	        
+	        echo "orderInfo.orders.push(order);";
+	      }
+	      if ($orderIDs == "[") {
+	        $orderIDs .= "]";
+	      } else {
+	        $orderIDs = substr_replace($orderIDs ,"]", -1);
+	      }  
+	    ?>
+	    
+	    orderInfo.totalItems = <?php echo $orderTotalItems; ?>;
+	    orderInfo.totalPrice = <?php echo $orderTotalPrice; ?>;
+	    
+	    window.vvcMagentoData["orderInfo"] = orderInfo;
+	    
+	  </script>  
+  
+  
+	  <script type="text/javascript">
+	    vivocha.ready(function() {
+	        var magentoData = [];
+	        
+	        <?php if ($nickName !== NULL): ?>
+	          vivocha.api.setNickname(<?php echo json_encode($nickName);?>);
+	        <?php endif; ?> 
+	        
+	        <?php if ( $customer->getData('entity_id') !== NULL ): ?>         
+	          magentoData.push({
+	            name: "customerID",
+	            desc: "Customer ID",
+	            value: <?php echo json_encode($customer->getData('entity_id')); ?>,
+	            visible: true,
+	            type: "text"
+	          });
+	        <?php endif; ?>
+	
+	        <?php $summaryCount = $cartHelper->getSummaryCount(); ?>
+	        <?php if ( $summaryCount !== NULL ): ?>  
+	          magentoData.push({
+	                  name: "totalItems",
+	                  desc: "Total cart items",
+	                  value: <?php echo $summaryCount; ?>,
+	                  visible: true,
+	                  type: "number"
+	          });
+	          magentoData.push({
+	                  name: "totalPrice",
+	                  desc: "Total price",
+	                  //value: <?php echo json_encode($coreHelper->formatPrice($cartHelper->getQuote()->getGrandTotal(), false)); ?>,
+	                  value: <?php echo json_encode($cartHelper->getQuote()->getGrandTotal()); ?>,
+	                  visible: true,
+	                  type: "text"
+	          });             
+	        <?php endif; ?> 
+	
+	        <?php
+	          $items = $cartHelper->getCart()->getItems();
+	          $itemIDs = "[";
+	          foreach  ($items as $item)  {  
+	            $itemIDs .= '{ "id":"' . $item->getProductId() . '","price":"' . Mage::helper('core')->currency($item->getPrice(),false,false) . '","qty":"' . $item->getQty() . '"},';
+	      
+	          } 
+	          
+	          if ($itemIDs == "[") {
+	            $itemIDs .= "]";
+	          } else {
+	            $itemIDs = substr_replace($itemIDs ,"]", -1);
+	          }
+	        ?>
+	        
+	        magentoData.push({
+	                name: "mail",
+	                desc: "Customer Email",
+	                value: <?php echo json_encode($customerEmail); ?>, 
+	                visible: true,
+	                type: "email"
+	        });
+	        
+	        magentoData.push({
+	                name: "firstName",
+	                desc: "First Name",
+	                value: <?php echo json_encode($customerFirstName); ?>, 
+	                visible: true,
+	                type: "firstname"
+	        });
+	
+	        magentoData.push({
+	                name: "lastName",
+	                desc: "Last Name",
+	                value: <?php echo json_encode($customerLastName); ?>, 
+	                visible: true,
+	                type: "lastname"
+	        });                
+	                        
+	        magentoData.push({
+	                name: "currency",
+	                desc: "Currency Symbol",
+	                value: <?php echo json_encode($currencySymbol); ?>,
+	                visible: false,
+	                type: "text"
+	        }); 
+	
+	        magentoData.push({
+	                name: "language",
+	                desc: "Current Language",
+	                value: <?php echo json_encode($currentLanguage); ?>,
+	                visible: false,
+	                type: "text"
+	        }); 
+	                        
+	        magentoData.push({
+	                name: "cart_items",
+	                desc: "Cart Items",
+	                value: <?php echo json_encode($itemIDs); ?>,
+	                visible: false,
+	                type: "text"
+	        });           
+	  
+	        magentoData.push({
+	                name: "order_list",
+	                desc: "Orders",
+	                value: <?php echo json_encode($orderIDs); ?>,
+	                visible: false,
+	                type: "text"
+	        });           
+	    
+	        vivocha.api.setData({
+	          name:      "customerInfo",
+	          desc:      "Customer Info",
+	          data:      magentoData      
+	        });
+	        
+	      vivocha.api.setLocationHandler(function (location) {
+	      
+	        if (window.vvcMagentoData["cartInfo"] && window.vvcMagentoData["cartInfo"].items) {
+	          location.cartItems = <?php echo $itemIDs?>;
+	        }
+	        if (window.vvcMagentoData["customerInfo"] && window.vvcMagentoData["customerInfo"].id) {
+	          location.customerID = window.vvcMagentoData["customerInfo"].id;
+	        }
+	        if (window.vvcMagentoData["orderInfo"] && window.vvcMagentoData["orderInfo"].orders) {
+	          location.orders = <?php echo $orderIDs?>;
+	        }        
+	        return location;
+	      });                 
+	        
+	  	});
+		</script>
+    
+<?php endif; ?>

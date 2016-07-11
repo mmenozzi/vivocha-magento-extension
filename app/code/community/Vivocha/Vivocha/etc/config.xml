@@ -1,0 +1,124 @@
+<?xml version="1.0"?>
+<config>
+    <modules>
+        <Vivocha_Vivocha>
+            <version>1.1.0</version>
+        </Vivocha_Vivocha>
+    </modules>
+    
+    <frontend>
+        <routers>
+            <vivocha>
+                <use>standard</use>
+                <args>
+                    <module>Vivocha_Vivocha</module>
+                    <frontName>vivocha</frontName>
+                </args>
+            </vivocha>
+        </routers>
+        <layout>
+            <updates>
+                <vivocha>
+                    <file>vivocha.xml</file>
+                </vivocha>
+            </updates>
+        </layout>
+    </frontend>
+            
+     <admin>
+        <routers>
+      <vivocha>
+        <use>admin</use>
+        <args>
+          <module>Vivocha_Vivocha</module>
+          <frontName>vivocha</frontName>
+        </args>
+      </vivocha>
+        </routers>
+    </admin>
+
+
+    
+    <adminhtml>
+      <menu>
+        <vivocha translate="title" module="vivocha">
+          <title>Vivocha</title>
+          <action>vivocha/adminhtml_vivocha</action>
+          <sort_order>100</sort_order>
+        </vivocha>
+      </menu>
+
+    <acl>
+      <resources>
+        <all>
+          <title>Allow Everything</title>
+        </all>      
+        <admin>
+          <children>
+          
+            <Vivocha_Vivocha>
+              <title>Vivocha</title>
+              <sort_order>100</sort_order>
+            </Vivocha_Vivocha>
+            <system>
+                            <children>
+                                <config>
+                                    <children>
+                                        <vivocha>
+                                            <title>Vivocha Section</title>
+                                        </vivocha>
+                                    </children>
+                                </config>
+                            </children>
+                        </system>          
+          
+          
+<!--
+            <vivocha translate="title" module="vivocha">
+              <title>Vivocha</title>
+              <sort_order>100</sort_order>
+            </vivocha>
+-->
+
+
+    </children>
+  </admin>
+      </resources>
+    </acl>
+    
+      <layout>
+      <updates>
+        <vivocha>
+          <file>vivocha.xml</file>
+        </vivocha>
+      </updates>
+    </layout>  
+    </adminhtml> 
+      
+    <global>
+      <blocks>
+        <vivocha>
+          <class>Vivocha_Vivocha_Block</class>
+        </vivocha>
+      </blocks>    
+      <helpers>
+          <vivocha>
+              <class>Vivocha_Vivocha_Helper</class>
+          </vivocha>
+      </helpers>
+      <models>
+        <vivocha>
+                  <class>Vivocha_Vivocha_Model</class>
+        </vivocha>
+      </models>
+    </global>
+  
+    <default>
+        <vivocha>
+            <general>
+        <vivocha_link>www.vivocha.com</vivocha_link>
+            </general>
+        </vivocha>
+    </default>
+       
+</config>

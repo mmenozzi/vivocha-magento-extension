@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<layout version="1.2.0">
+    <default>
+		<reference name="before_body_end">
+			<block type="vivocha/vivocha" name="body.vivocha.vivocha" >
+				<action method="setTemplate">
+					<template>vivocha/vivocha.phtml</template> 
+				</action>
+			</block>
+        </reference>
+    </default>  
+</layout>

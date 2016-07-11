@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<layout version="1.0.0">
+	<default>
+<!--
+    <reference name="head">
+		  <action method="addCss">
+				<stylesheet>css/bootstrap.min.css</stylesheet>
+				<params>media="screen"</params>
+			</action>
+		</reference>
+-->
+	</default>
+    <vivocha_adminhtml_vivocha_index>
+        <reference name="content">
+            <block type="vivocha/adminhtml_vivocha" name="vivocha" />
+        </reference>
+    </vivocha_adminhtml_vivocha_index>
+</layout>
