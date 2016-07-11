@@ -1,0 +1,8 @@
+app/code/community/Vivocha/Vivocha                      app/code/community/Vivocha/Vivocha
+app/design/adminhtml/default/default/layout/vivocha.xml app/design/adminhtml/default/default/layout/vivocha.xml
+app/design/adminhtml/default/default/template/vivocha/  app/design/adminhtml/default/default/template/vivocha/
+app/design/frontend/base/default/layout/vivocha.xml     app/design/frontend/base/default/layout/vivocha.xml
+app/design/frontend/base/default/template/vivocha/      app/design/frontend/base/default/template/vivocha/
+app/design/frontend/default/default/layout/vivocha.xml  app/design/frontend/default/default/layout/vivocha.xml
+app/design/frontend/default/default/template/vivocha/   app/design/frontend/default/default/template/vivocha/
+app/etc/modules/Vivocha_Vivocha.xml                     app/etc/modules/Vivocha_Vivocha.xml
