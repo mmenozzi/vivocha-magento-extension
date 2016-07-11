@@ -1,0 +1,13 @@
+{
+    "name": "vivocha/magento-extension",
+    "description": "Vivocha Magento Extension",
+    "type": "magento-module",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Vivocha SpA",
+            "email": "info@vivocha.com"
+        }
+    ],
+    "require": {}
+}
